@@ -10,38 +10,88 @@ import CurrencyField from '../../src/CurrencyField';
 
 describe('CurrencyField', () => {
 
-    let currencyField;
-
-    beforeEach(() => {
-        currencyField = TestUtils.renderIntoDocument(
+    it('parseRawValue', () => {
+        let currencyField = TestUtils.renderIntoDocument(
             <CurrencyField
                 precision={2}
                 separator=','
                 delimiter='.'
                 unit='R$'/>
         );
-    });
 
-    it('parseRawValue', () => {
         expect(currencyField.parseRawValue('R$ 1.000,00')).toEqual(100000);
         expect(currencyField.parseRawValue('R$ 2,20')).toEqual(220);
         expect(currencyField.parseRawValue('R$ 0,00')).toEqual(0);
     });
 
     it('onChange', () => {
-        currencyField = TestUtils.renderIntoDocument(
+        let currencyField = TestUtils.renderIntoDocument(
             <CurrencyField
                 precision={2}
-                separator=','
-                delimiter='.'
-                unit='R$'
-                value={100.00}
+                separator='.'
+                delimiter=','
+                unit='US$'
+                value={1000250}
                 onChange={(raw, display) => {
-                    expect(raw).toEqual(100.00);
+                    expect(raw).toEqual(10002.50);
                 }}/>
         );
 
         TestUtils.Simulate.change(currencyField);
+    });
+
+    it('notifyParentWithRawValue empty', () => {
+        let currencyField = TestUtils.renderIntoDocument(
+            <CurrencyField
+                precision={2}
+                separator='.'
+                delimiter=','
+                unit='US$'
+                onChange={(raw, display) => {
+                    expect(raw).toEqual(0);
+                }}/>
+        );
+
+        currencyField.notifyParentWithRawValue('');
+    });
+
+    it('notifyParentWithRawValue valid', () => {
+        TestUtils.renderIntoDocument(
+            <CurrencyField
+                precision={2}
+                separator='.'
+                delimiter=','
+                unit='US$'
+                value={2010014}
+                onChange={(raw, display) => {
+                    expect(raw).toEqual(20100.14);
+                }}/>
+        );
+
+        TestUtils.renderIntoDocument(
+            <CurrencyField
+                value={10}
+                onChange={(raw, display) => {
+                    expect(raw).toEqual(10);
+                }}/>
+        );
+
+        TestUtils.renderIntoDocument(
+            <CurrencyField
+                value={100}
+                onChange={(raw, display) => {
+                    expect(raw).toEqual(1);
+                }}/>
+        );
+
+        TestUtils.renderIntoDocument(
+            <CurrencyField
+                precision={1}
+                value={100}
+                onChange={(raw, display) => {
+                    expect(raw).toEqual(10.00);
+                }}/>
+        );
     });
 
 });

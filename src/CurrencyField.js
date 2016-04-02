@@ -10,7 +10,7 @@ class CurrencyField extends Component {
         this.onInputType = this.onInputType.bind(this);
         this.formatRawValue = this.formatRawValue.bind(this);
         this.parseRawValue = this.parseRawValue.bind(this);
-        this.removeOccurrences = this.removeOccurrences.bind(this);
+        this.defaultConverter = this.defaultConverter.bind(this);
         this.state = {
             rawValue: this.props.value,
         };
@@ -41,18 +41,14 @@ class CurrencyField extends Component {
 
     notifyParentWithRawValue(rawValue) {
         const display = this.formatRawValue(rawValue);
-
-        this.props.onChange(rawValue, display);
+        const converter = this.props.converter || this.defaultConverter;
+        this.props.onChange(converter(rawValue), display);
     }
 
     parseRawValue(displayedValue) {
-        let result = displayedValue;
+        const value = displayedValue.replace(/[^0-9]/g, '');
 
-        result = this.removeOccurrences(result, this.props.delimiter);
-        result = this.removeOccurrences(result, this.props.separator);
-        result = this.removeOccurrences(result, this.props.unit);
-
-        return parseFloat(result);
+        return parseFloat(value);
     }
 
     formatRawValue(rawValue) {
@@ -92,10 +88,25 @@ class CurrencyField extends Component {
         return result;
     }
 
-    removeOccurrences(aFrom, aTo) {
-        const to = aTo.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
-        const re = new RegExp(to, 'g');
-        return aFrom.replace(re, '');
+    defaultConverter(val) {
+        const {precision} = this.props;
+        const raw = val.toString();
+
+        if (Number.isNaN(parseFloat(raw))) {
+            return 0;
+        }
+
+        if (!raw.length) {
+            return parseFloat(raw);
+        }
+
+        if (precision >= raw.length) {
+            return parseFloat(raw);
+        }
+
+        const prefix = raw.slice(0, raw.length - precision);
+        const sufix = raw.slice(raw.length - precision, raw.length);
+        return parseFloat(`${prefix}.${sufix}`);
     }
 
     render() {
@@ -117,6 +128,7 @@ CurrencyField.propTypes = {
     separator: React.PropTypes.string,
     unit: React.PropTypes.string,
     value: React.PropTypes.number,
+    converter: React.PropTypes.func,
 };
 
 CurrencyField.defaultProps = {
